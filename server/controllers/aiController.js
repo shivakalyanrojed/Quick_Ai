@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import sql from "../configs/db.js";
 import axios from "axios";
 import {v2 as cloudinary} from 'cloudinary';
+import FormData from "form-data";
 
 const AI = new OpenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -100,25 +101,89 @@ export const generateImage = async (req, res) => {
         
         const formData = new FormData()
         formData.append('prompt', prompt);
-        const {data} = await axios.post('https://clipdrop-api.co/text-to-image/v1',formData,{headers:{'x-api-key': process.env.CLIPDROP_API_KEY,},
-        responseType:'arraybuffer',})
+        const {data} = await axios.post('https://clipdrop-api.co/text-to-image/v1', formData, {
+            headers: { 
+                ...formData.getHeaders(), 
+                'x-api-key': process.env.CLIPDROP_API_KEY 
+            },
+            responseType: 'arraybuffer',
+        })
 
         const base64Image =`data:image/png;base64,${Buffer.from(data,'binary').toString('base64')}`;
 
         const {secure_url} = await cloudinary.uploader.upload(base64Image)
 
 
-    await sql `INSERT INTO creations(user_id,prompt,content,type) VALUES(${userId},${prompt},${content},'blog-title')`
+    await sql `INSERT INTO creations(user_id,prompt,content,type,publish) VALUES(${userId},${prompt},${secure_url},'image',${publish ?? false})`
 
-    if (plan!=='premium'){
-        await clerkClient.users.updateUser(userId,{
-            privateMetadata:{free_usage:free_usage+1}
-        })
-    } 
-    res.json({success:true,content})
+    res.json({success:true,content:secure_url})
     } catch (error) {
         console.log(error.message);
         res.json({ success: false, message: error.message })
     }
 }
+
+
+
+export const removeImageBackground = async (req, res) => {
+    try {
+        const {userId} = req.auth();
+        const {image}=req.file;
+        const plan = req.plan;
+
+        if(plan!=='premium'){
+            return res.json({success:false,message:'This feature is only for premium subscription'})
+        }
+        
+        const {secure_url} = await cloudinary.uploader.upload(image.path,{
+            transformation: [
+                {
+                    effect: "remove_background",
+                    background_removal:'remove the background'
+                }
+            ]
+        })
+
+
+    await sql `INSERT INTO creations(user_id,prompt,content,type) VALUES(${userId},'Remove background from image',${secure_url},'image')`
+
+    res.json({success:true,content:secure_url})
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message })
+    }
+}
+
+
+export const removeImageObjext = async (req, res) => {
+    try {
+        const {userId} = req.auth();
+        const {object} = req.body;   
+        const {image}=req.file;
+        const plan = req.plan;
+
+        if(plan!=='premium'){
+            return res.json({success:false,message:'This feature is only for premium subscription'})
+        }
+        
+        const {secure_url} = await cloudinary.uploader.upload(image.path);
+
+        const imageUrl = cloudinary.url(public_id,{transformation:[{
+            effect:`gen_remove:${object}`,
+        }],
+            resource_type:'image',
+        })
+
+
+    await sql `INSERT INTO creations(user_id,prompt,content,type) VALUES(${userId},${`Reomved ${object} from the Image`},${imageUrl},'image')`
+
+    res.json({success:true,content:imageUrl})
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message })
+    }
+}
+
+
+
 
