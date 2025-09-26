@@ -5,7 +5,7 @@ import Layout from './pages/Layout'
 import Dashboard from './pages/Dashboard'
 import WriteArticle from './pages/WriteArticle'
 import Blogtitles from './pages/Blogtitles'
-import GenerateImages from './pages/GenerateImage'
+import GenerateImage from './pages/GenerateImage'
 import Removebackground from './pages/Removebackground'
 import Removeobject from './pages/Removeobject'
 import Community from './pages/Community'
@@ -25,7 +25,7 @@ const App = () => {
           <Route index element={<Dashboard/>}/>
           <Route path="write-article" element={<WriteArticle/>}/>
           <Route path="blog-titles" element={<Blogtitles/>}/>
-          <Route path="generate-images" element={<GenerateImages/>} />
+          <Route path="generate-images" element={<GenerateImage/>} />
           <Route path="remove-background" element={<Removebackground/>} />
           <Route path="remove-object" element={<Removeobject/>} />
           <Route path="community" element={<Community/>} />
