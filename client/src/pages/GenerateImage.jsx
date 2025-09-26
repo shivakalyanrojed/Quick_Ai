@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 
 axios.defaults.baseURL = import.meta.env.VITE_BASE_URL;
 
-const Generateimages = () => {
+const GenerateImage = () => {
      const imageStyles=['Gibli style','Realistic','Anime style','Cartoon Style','3D']
      const [selectedStyle, setselectedStyle] = useState('Gibli style');
      const [input,setinput] = useState('');
@@ -91,4 +91,4 @@ const Generateimages = () => {
   )
 }
 
-export default Generateimages
+export default GenerateImage
